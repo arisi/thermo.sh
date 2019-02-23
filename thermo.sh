@@ -4,6 +4,8 @@ GPIO=/sys/class/gpio
 ID=28-011562c951ff
 TARGET=25
 HYSTERESIS=1
+
+echo thermo.sh : Simple temperature controller for Raspberry PI
   
 if [ ! -e /sys/bus/w1 ]; then
   echo ERROR: 1wire bus NOT detected
