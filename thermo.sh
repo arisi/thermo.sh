@@ -4,6 +4,8 @@ GPIO=/sys/class/gpio
 
 ID=28-011562c951ff
 RELAY_PIN=2
+RELAY_ACTIVE=0
+
 RELAY=gpio$RELAY_PIN
 
 TARGET=25
@@ -39,13 +41,17 @@ shutdown()
   exit 0
 }
 
+RELAY_STATE="?"
 
 setRelay() {
-  echo Set Relay $1 old $RELAY_STATE
-  if (( $1 != $RELAY_STATE )); then
-    echo $1 >$GPIO/$RELAY/value
+  if [ "$1" != "$RELAY_STATE" ]; then
+    if [ "$1" == "off" ]; then 
+      echo 1 >$GPIO/$RELAY/value
+    else
+      echo 0 >$GPIO/$RELAY/value    
+    fi
     RELAY_STATE=$1
-    echo really set 
+    echo Set Relay $1 
   fi
 }
 
@@ -62,14 +68,14 @@ do
     if [[ $data =~ t=([0-9]+)$ ]]; then
 
       temp="$((${BASH_REMATCH[1]} / 1000))"
-      echo Temperature: $temp C / $TARGET
+      echo Temperature: $temp C / $TARGET / RELAY: $RELAY_STATE
       if (( $temp > $TARGET + $HYSTERESIS )); then
         echo over
-        setRelay 1
+        setRelay off
         # echo 1 >/sys/class/gpio/$RELAY/value
       elif (( $temp < $TARGET - $HYSTERESIS )); then
         echo under
-        setRelay 0
+        setRelay on
         # echo 0 >/sys/class/gpio/$RELAY/value
       else
         echo ok
