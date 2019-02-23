@@ -35,8 +35,18 @@ fi
 shutdown()
 {
   echo 2 >$GPIO/unexport
-  echo "\nExiting... GPIO2 uninitialized"
+  echo "\nExiting... $RELAY uninitialized"
   exit 0
+}
+
+relayON() {
+  echo 0 >/sys/class/gpio/$RELAY/value
+  echo "Set Relay ON"
+}
+
+relayOFF() {
+  echo 1 >/sys/class/gpio/$RELAY/value
+  echo "Set Relay OFF"
 }
 
 trap shutdown SIGINT
@@ -55,10 +65,12 @@ do
       echo Temperature: $temp C / $TARGET
       if (( $temp > $TARGET + $HYSTERESIS )); then
         echo over
-        echo 1 >/sys/class/gpio/$RELAY/value
+        relayOFF
+        # echo 1 >/sys/class/gpio/$RELAY/value
       elif (( $temp < $TARGET - $HYSTERESIS )); then
         echo under
-        echo 0 >/sys/class/gpio/$RELAY/value
+        relayON
+        # echo 0 >/sys/class/gpio/$RELAY/value
       else
         echo ok
       fi
