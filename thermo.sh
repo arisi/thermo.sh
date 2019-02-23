@@ -42,8 +42,11 @@ shutdown()
 
 setRelay() {
   echo Set Relay $1 old $RELAY_STATE
-  echo $1 >$GPIO/$RELAY/value
-  RELAY_STATE=$1
+  if (( $1 != $RELAY_STATE )); then
+    echo $1 >$GPIO/$RELAY/value
+    RELAY_STATE=$1
+    echo really set 
+  fi
 }
 
 trap shutdown SIGINT
