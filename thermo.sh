@@ -59,7 +59,7 @@ trap shutdown SIGINT
 
 echo "Using $RELAY as relay drive"
 echo out >$GPIO/$RELAY/direction
-echo 1 >$GPIO/$RELAY/value
+setRelay off
 
 while [ 1 ]
 do
