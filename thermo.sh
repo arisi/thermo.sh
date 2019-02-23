@@ -39,14 +39,11 @@ shutdown()
   exit 0
 }
 
-relayON() {
-  echo 0 >/sys/class/gpio/$RELAY/value
-  echo "Set Relay ON"
-}
 
-relayOFF() {
-  echo 1 >/sys/class/gpio/$RELAY/value
-  echo "Set Relay OFF"
+setRelay() {
+  echo Set Relay $1 old $RELAY_STATE
+  echo $1 >$GPIO/$RELAY/value
+  RELAY_STATE=$1
 }
 
 trap shutdown SIGINT
@@ -65,11 +62,11 @@ do
       echo Temperature: $temp C / $TARGET
       if (( $temp > $TARGET + $HYSTERESIS )); then
         echo over
-        relayOFF
+        setRelay 1
         # echo 1 >/sys/class/gpio/$RELAY/value
       elif (( $temp < $TARGET - $HYSTERESIS )); then
         echo under
-        relayON
+        setRelay 0
         # echo 0 >/sys/class/gpio/$RELAY/value
       else
         echo ok
