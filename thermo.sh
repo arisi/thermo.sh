@@ -41,9 +41,9 @@ shutdown()
 
 trap shutdown SIGINT
 
-echo "Using GPIO2 (pin 3 on header) for relay drive"
-echo out >$GPIO/gpio2/direction
-echo 1 >/sys/class/gpio/gpio2/value
+echo "Using $RELAY as relay drive"
+echo out >$GPIO/$RELAY/direction
+echo 1 >$GPIO/$RELAY/value
 
 while [ 1 ]
 do
@@ -55,7 +55,7 @@ do
       echo Temperature: $temp C / $TARGET
       if (( $temp > $TARGET + $HYSTERESIS )); then
         echo over
-        echo 1 >/sys/class/gpio/$RELAY/value	
+        echo 1 >/sys/class/gpio/$RELAY/value
       elif (( $temp < $TARGET - $HYSTERESIS )); then
         echo under
         echo 0 >/sys/class/gpio/$RELAY/value
