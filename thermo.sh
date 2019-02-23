@@ -1,17 +1,23 @@
 #!/bin/bash
 
+
+RELAY_PIN=${RELAY_PIN:-2}
+RELAY_ACTIVE=${RELAY_ACTIVE:-0}
+TARGET=${TARGET:-25}
+
 GPIO=/sys/class/gpio
-
-ID=28-011562c951ff
-RELAY_PIN=2
-RELAY_ACTIVE=0
-
 RELAY=gpio$RELAY_PIN
-
-TARGET=25
 HYSTERESIS=1
+RELAY_STATE="?"
 
-echo thermo.sh : Simple temperature controller for Raspberry PI
+echo "thermo.sh : Simple temperature controller for Raspberry PI"
+echo 
+echo "Config: (use environment variables to adjust)"
+echo " ID:            1wire sensor address:  $ID"
+echo " RELAY_PIN:     Relay pin:             $RELAY_PIN"
+echo " RELAY_ACTIVE:  Active state:          $RELAY_ACTIVE"
+echo " TARGET:        Target temperature:    $TARGET"
+echo
 
 if [ ! -e /sys/bus/w1 ]; then
   echo ERROR: 1wire bus NOT detected
@@ -23,41 +29,35 @@ if [ ! -e /sys/bus/w1/devices/$ID/w1_slave ]; then
 fi
 
 if [ ! -e /sys/class/gpio/$RELAY/device/dev ]; then
-  echo Activating $RELAY for relay drive...
   echo $RELAY_PIN >$GPIO/export
   sleep 1
   if [ ! -e /sys/class/gpio/$RELAY/device/dev ]; then
     echo ERROR: Failed to activate $RELAY for relay drive
     exit -1
   fi
-  echo "Done"
 fi
 
-
-shutdown()
-{
+shutdown() {
   echo 2 >$GPIO/unexport
-  echo "\nExiting... $RELAY uninitialized"
+  echo "\nExiting."
   exit 0
 }
+trap shutdown SIGINT
 
-RELAY_STATE="?"
 
 setRelay() {
   if [ "$1" != "$RELAY_STATE" ]; then
     if [ "$1" == "off" ]; then 
-      echo 1 >$GPIO/$RELAY/value
+      echo $(( ! $RELAY_ACTIVE )) >$GPIO/$RELAY/value
     else
-      echo 0 >$GPIO/$RELAY/value    
+      echo $RELAY_ACTIVE >$GPIO/$RELAY/value    
     fi
     RELAY_STATE=$1
     echo Set Relay $1 
   fi
 }
 
-trap shutdown SIGINT
 
-echo "Using $RELAY as relay drive"
 echo out >$GPIO/$RELAY/direction
 setRelay off
 
@@ -66,20 +66,16 @@ do
   data=$(cat /sys/bus/w1/devices/$ID/w1_slave)
   if echo "$data" | grep -q YES; then
     if [[ $data =~ t=([0-9]+)$ ]]; then
-
       temp="$((${BASH_REMATCH[1]} / 1000))"
-      echo Temperature: $temp C / $TARGET / RELAY: $RELAY_STATE
+      info="ok"
       if (( $temp > $TARGET + $HYSTERESIS )); then
-        echo over
+        info="OVER"
         setRelay off
-        # echo 1 >/sys/class/gpio/$RELAY/value
       elif (( $temp < $TARGET - $HYSTERESIS )); then
-        echo under
+        info="UNDER"
         setRelay on
-        # echo 0 >/sys/class/gpio/$RELAY/value
-      else
-        echo ok
       fi
+      echo Temperature: $temp C / Target: $TARGET / Relay: $RELAY_STATE / State: $info
     else
       echo ERROR: No Temperature: $data
     fi
