@@ -20,8 +20,9 @@ TARGET=${THERMO_TARGET:-25}
 ONEWIRE=/sys/bus/w1/devices
 GPIO=/sys/class/gpio
 RELAY=gpio$RELAY_PIN
-HYSTERESIS=1
+TOLERANCE=1
 RELAY_STATE="?"
+
 echo
 echo "thermo.sh : Simple temperature controller for Raspberry PI"
 echo
@@ -33,27 +34,28 @@ echo " THERMO_TARGET:          Target Temperature:    $TARGET"
 echo
 
 
-if [ ! -e /sys/bus/w1 ]; then
-  echo "ERROR: ONEWIRE bus NOT detected"
-  exit -1
-fi
-
-if [ ! -e $ONEWIRE/$ADDR/w1_slave ]; then
-  if [ "$ADDR" == "" ]; then
-    echo "ERROR: No ONEWIRE address provided!"
-  else
-    echo "ERROR: ONEWIRE sensor $ADDR NOT detected"
+init1wire() {
+  if [ ! -e /sys/bus/w1 ]; then
+    echo "ERROR: 1WIRE bus NOT detected"
+    exit -1
   fi
-  echo
-  echo "Please set it with environment variable, eg:"
-  echo "ID=28-011562c951ff RELAY_PIN=2 ./thermo.sh"
-  echo
-  echo "Detected sensors:"
-  ls $ONEWIRE |grep '^[1-9][0-9]-'
-  echo
-  echo "Pick one of them and run: THERMO_ADDR=xxx ./thermo.sh"
-  exit -1
-fi
+  if [ ! -e $ONEWIRE/$ADDR/w1_slave ]; then
+    if [ "$ADDR" == "" ]; then
+      echo "ERROR: No 1WIRE address provided!"
+    else
+      echo "ERROR: 1WIRE sensor $ADDR NOT detected"
+    fi
+    echo
+    echo "Please set it with environment variable, eg:"
+    echo "ID=28-011562c951ff RELAY_PIN=2 ./thermo.sh"
+    echo
+    echo "Detected sensors:"
+    ls $ONEWIRE |grep '^[1-9][0-9]-'
+    echo
+    echo "Pick one of them and run: THERMO_ADDR=xxx ./thermo.sh"
+    exit -1
+  fi
+}
 
 configRelay() {
   if [ ! -e $GPIO/$RELAY/device/dev ]; then
@@ -83,9 +85,10 @@ shutdown() {
   echo "\nExiting."
   exit 0
 }
-trap shutdown SIGINT
 
+init1wire
 configRelay
+trap shutdown SIGINT
 setRelay off
 
 while [ 1 ]
@@ -95,10 +98,10 @@ do
     if [[ $data =~ t=([0-9]+)$ ]]; then
       temp="$((${BASH_REMATCH[1]} / 1000))"
       info="ok"
-      if (( $temp > $TARGET + $HYSTERESIS )); then
+      if (( $temp > $TARGET + $TOLERANCE )); then
         info="OVER"
         setRelay off
-      elif (( $temp < $TARGET - $HYSTERESIS )); then
+      elif (( $temp < $TARGET - $TOLERANCE )); then
         info="UNDER"
         setRelay on
       fi
