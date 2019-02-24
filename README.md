@@ -11,9 +11,7 @@ to configure the chosen pin as output.
 
 ### 1Wire 
 
-You need to configure 1wire bus as usual by adding this line to:
-
-`/boot/config.txt`
+You need to configure 1wire bus as usual by adding this line to file `/boot/config.txt` :
 
 `dtoverlay=w1-gpio,gpiopin=x`
 
