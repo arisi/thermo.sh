@@ -88,10 +88,12 @@ $
 
 ## TODO
 
-- PID controller?
+- PID controller
 - Send data to cloud with curl
 - Cooling relay control
 - Statistics collection
+- Local OLED/Epaper display
+- Control buttons
 
 
 
