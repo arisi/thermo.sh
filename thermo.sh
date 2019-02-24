@@ -16,13 +16,14 @@ RELAY_PIN=${THERMO_RELAY_PIN:-2}
 RELAY_ACTIVE=${THERMO_RELAY_ACTIVE:-0}
 TARGET=${THERMO_TARGET:-25}
 
+1WIRE=/sys/bus/w1/devices
 GPIO=/sys/class/gpio
 RELAY=gpio$RELAY_PIN
 HYSTERESIS=1
 RELAY_STATE="?"
 
 echo "thermo.sh : Simple temperature controller for Raspberry PI"
-echo 
+echo
 echo "Config: (use environment variables to adjust)"
 echo " THERMO_ADDR:            1wire Sensor Address:  $ADDR"
 echo " THERMO_RELAY_PIN:       Relay pin:             $RELAY_PIN"
@@ -32,34 +33,49 @@ echo
 
 
 if [ ! -e /sys/bus/w1 ]; then
-  echo ERROR: 1wire bus NOT detected
+  echo "ERROR: 1wire bus NOT detected"
   exit -1
 fi
 
-if [ ! -e /sys/bus/w1/devices/$ADDR/w1_slave ]; then
+if [ ! -e $1WIRE/$ADDR/w1_slave ]; then
   if [ "$ADDR" == "" ]; then
     echo "ERROR: No 1wire address provided!"
   else
-    echo ERROR: 1wire sensor $ADDR NOT detected
+    echo "ERROR: 1wire sensor $ADDR NOT detected"
   fi
-  echo 
+  echo
   echo "Please set it with environment variable, eg:"
   echo "ID=28-011562c951ff RELAY_PIN=2 ./thermo.sh"
   echo
   echo "Detected sensors:"
-  ls /sys/bus/w1/devices/ |grep '^[1-9][0-9]-'
+  ls $1WIRE |grep '^[1-9][0-9]-'
   echo
+  echo "Pick one of them and run: THERMO_ADDR=xxx ./thermo.sh"
   exit -1
 fi
 
-if [ ! -e /sys/class/gpio/$RELAY/device/dev ]; then
-  echo $RELAY_PIN >$GPIO/export
-  sleep 1
-  if [ ! -e /sys/class/gpio/$RELAY/device/dev ]; then
-    echo ERROR: Failed to activate $RELAY for relay drive
-    exit -1
+configRelay() {
+  if [ ! -e $GPIO/$RELAY/device/dev ]; then
+    echo $RELAY_PIN >$GPIO/export
+    sleep 1
+    if [ ! -e $GPIO/$RELAY/device/dev ]; then
+      echo "ERROR: Failed to activate $RELAY for relay drive"
+      exit -1
+    fi
   fi
-fi
+  echo out >$GPIO/$RELAY/direction
+}
+
+setRelay() {
+  if [ "$1" != "$RELAY_STATE" ]; then
+    if [ "$1" == "off" ]; then
+      echo $(( ! $RELAY_ACTIVE )) >$GPIO/$RELAY/value
+    else
+      echo $RELAY_ACTIVE >$GPIO/$RELAY/value
+    fi
+    RELAY_STATE=$1
+  fi
+}
 
 shutdown() {
   echo $RELAY_PIN >$GPIO/unexport
@@ -68,25 +84,12 @@ shutdown() {
 }
 trap shutdown SIGINT
 
-
-setRelay() {
-  if [ "$1" != "$RELAY_STATE" ]; then
-    if [ "$1" == "off" ]; then 
-      echo $(( ! $RELAY_ACTIVE )) >$GPIO/$RELAY/value
-    else
-      echo $RELAY_ACTIVE >$GPIO/$RELAY/value    
-    fi
-    RELAY_STATE=$1
-  fi
-}
-
-
-echo out >$GPIO/$RELAY/direction
+configRelay
 setRelay off
 
 while [ 1 ]
 do
-  data=$(cat /sys/bus/w1/devices/$ADDR/w1_slave)
+  data=$(cat $1WIRE/$ADDR/w1_slave)
   if echo "$data" | grep -q YES; then
     if [[ $data =~ t=([0-9]+)$ ]]; then
       temp="$((${BASH_REMATCH[1]} / 1000))"
@@ -98,12 +101,12 @@ do
         info="UNDER"
         setRelay on
       fi
-      echo Temperature: $temp C / Target: $TARGET / Relay: $RELAY_STATE / State: $info
+      echo "Temperature: $temp C / Target: $TARGET / Relay: $RELAY_STATE / State: $info"
     else
-      echo ERROR: No Temperature: $data
+      echo "ERROR: No Temperature: $data"
     fi
   else
-    echo ERROR: CRC: $data
+    echo "ERROR: CRC: $data"
   fi
   sleep 1
 done
