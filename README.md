@@ -1,6 +1,6 @@
 # Thermo.sh -- Thermostat in Bash
 
-Simple as it can be: no dependencies, nothing to install on vanilla rasbian OS.
+Simple as it can be: no dependencies, nothing to install on vanilla raspbian OS.
 
 ## Hardware Preparations:
 
