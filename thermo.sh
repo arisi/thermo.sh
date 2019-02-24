@@ -1,9 +1,20 @@
 #!/bin/bash
 
+###
+#
+# thermo.sh
+#
+# A simple shell script for temperature control with Raspberry PI and DS1820 1Wire sensor
+#
+# Written by Ari Siitonen (jalopuuverstas@gmail.com) 2019
+#
+# https://github.com/arisi/thermo.sh
+#
+###
 
-RELAY_PIN=${RELAY_PIN:-2}
-RELAY_ACTIVE=${RELAY_ACTIVE:-0}
-TARGET=${TARGET:-25}
+RELAY_PIN=${THERMO_RELAY_PIN:-2}
+RELAY_ACTIVE=${THERMO_RELAY_ACTIVE:-0}
+TARGET=${THERMO_TARGET:-25}
 
 GPIO=/sys/class/gpio
 RELAY=gpio$RELAY_PIN
@@ -13,18 +24,31 @@ RELAY_STATE="?"
 echo "thermo.sh : Simple temperature controller for Raspberry PI"
 echo 
 echo "Config: (use environment variables to adjust)"
-echo " ID:            1wire sensor address:  $ID"
-echo " RELAY_PIN:     Relay pin:             $RELAY_PIN"
-echo " RELAY_ACTIVE:  Active state:          $RELAY_ACTIVE"
-echo " TARGET:        Target temperature:    $TARGET"
+echo " THERMO_ADDR:            1wire Sensor Address:  $ADDR"
+echo " THERMO_RELAY_PIN:       Relay pin:             $RELAY_PIN"
+echo " THERMO_RELAY_ACTIVE:    Relay Active State:    $RELAY_ACTIVE"
+echo " THERMO_TARGET:          Target Temperature:    $TARGET"
 echo
+
 
 if [ ! -e /sys/bus/w1 ]; then
   echo ERROR: 1wire bus NOT detected
   exit -1
 fi
-if [ ! -e /sys/bus/w1/devices/$ID/w1_slave ]; then
-  echo ERROR: 1wire sensor $ID NOT detected
+
+if [ ! -e /sys/bus/w1/devices/$ADDR/w1_slave ]; then
+  if [ "$ADDR" == "" ]; then
+    echo "ERROR: No 1wire address provided!"
+  else
+    echo ERROR: 1wire sensor $ADDR NOT detected
+  fi
+  echo 
+  echo "Please set it with environment variable, eg:"
+  echo "ID=28-011562c951ff RELAY_PIN=2 ./thermo.sh"
+  echo
+  echo "Detected sensors:"
+  ls /sys/bus/w1/devices/ |grep '^[1-9][0-9]-'
+  echo
   exit -1
 fi
 
@@ -38,7 +62,7 @@ if [ ! -e /sys/class/gpio/$RELAY/device/dev ]; then
 fi
 
 shutdown() {
-  echo 2 >$GPIO/unexport
+  echo $RELAY_PIN >$GPIO/unexport
   echo "\nExiting."
   exit 0
 }
@@ -53,7 +77,6 @@ setRelay() {
       echo $RELAY_ACTIVE >$GPIO/$RELAY/value    
     fi
     RELAY_STATE=$1
-    echo Set Relay $1 
   fi
 }
 
@@ -63,7 +86,7 @@ setRelay off
 
 while [ 1 ]
 do
-  data=$(cat /sys/bus/w1/devices/$ID/w1_slave)
+  data=$(cat /sys/bus/w1/devices/$ADDR/w1_slave)
   if echo "$data" | grep -q YES; then
     if [[ $data =~ t=([0-9]+)$ ]]; then
       temp="$((${BASH_REMATCH[1]} / 1000))"
