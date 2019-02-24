@@ -60,7 +60,7 @@ Temperature: 21 C / Target: 25 / Relay: on / State: UNDER
 Temperature: 21 C / Target: 25 / Relay: on / State: UNDER
 
 \nExiting.
-pi@raspberryp
+$
 
 ```
 
