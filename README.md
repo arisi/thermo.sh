@@ -31,7 +31,28 @@ when pin is low and 1=> opposite.
 Set environment variable `THERMO_ADDR` to sensor address chosen. There is no default.
 
 You can run the `./thermo.sh` with no sensor config: it will list the available sensors so 
-you can pick one of them.
+you can pick one of them:
+
+```console
+thermo.sh : Simple temperature controller for Raspberry PI
+
+Config: (use environment variables to adjust)
+ THERMO_ADDR:            1WIRE Sensor Address:  
+ THERMO_RELAY_PIN:       Relay pin:             2
+ THERMO_RELAY_ACTIVE:    Relay Active State:    0
+ THERMO_TARGET:          Target Temperature:    25
+
+ERROR: No 1WIRE address provided!
+
+Please set it with environment variable, eg:
+THERMO_ADDR=28-011562c951ff RELAY_PIN=2 ./thermo.sh
+
+Detected sensors:
+28-011562c951ff
+
+Pick one of them and run: THERMO_ADDR=xxx ./thermo.sh
+
+```
 
 
 ## Thermostat Configuration:
@@ -42,7 +63,7 @@ Set environment variable `THERMO_TARGET` to the target temperature. Default is 2
 
 Just run the script:
 
-```
+```console
 
 $ THERMO_ADDR=28-011562c951ff ./thermo.sh
 
