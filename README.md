@@ -86,4 +86,12 @@ $
 
 ```
 
+## TODO
+
+- PID controller?
+- Send data to cloud with curl
+- Cooling relay control
+- Statistics collection
+
+
 
