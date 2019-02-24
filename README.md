@@ -15,7 +15,7 @@ You need to configure 1wire bus as usual by adding this line to file `/boot/conf
 
 `dtoverlay=w1-gpio,gpiopin=x`
 
-replacing the x with your chosen 1wire pin.
+replacing the x with your chosen 1wire pin. Reboot required.
 
 ## Hardware Configuration:
 
