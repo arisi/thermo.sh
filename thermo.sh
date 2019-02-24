@@ -47,7 +47,7 @@ init1wire() {
     fi
     echo
     echo "Please set it with environment variable, eg:"
-    echo "THERMO_ADDRESS=28-011562c951ff RELAY_PIN=2 ./thermo.sh"
+    echo "THERMO_ADDR=28-011562c951ff RELAY_PIN=2 ./thermo.sh"
     echo
     echo "Detected sensors:"
     ls $ONEWIRE |grep '^[1-9][0-9]-'
