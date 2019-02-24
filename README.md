@@ -34,6 +34,9 @@ You can run the `./thermo.sh` with no sensor config: it will list the available 
 you can pick one of them:
 
 ```console
+
+$ ./thermo.sh
+
 thermo.sh : Simple temperature controller for Raspberry PI
 
 Config: (use environment variables to adjust)
