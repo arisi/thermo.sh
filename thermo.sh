@@ -4,7 +4,7 @@
 #
 # thermo.sh
 #
-# A simple shell script for temperature control with Raspberry PI and DS1820 1Wire sensor
+# A simple shell script for temperature control with Raspberry PI and DS1820 ONEWIRE sensor
 #
 # Written by Ari Siitonen (jalopuuverstas@gmail.com) 2019
 #
@@ -12,20 +12,21 @@
 #
 ###
 
+ADDR=${THERMO_ADDR}
 RELAY_PIN=${THERMO_RELAY_PIN:-2}
 RELAY_ACTIVE=${THERMO_RELAY_ACTIVE:-0}
 TARGET=${THERMO_TARGET:-25}
 
-1WIRE=/sys/bus/w1/devices
+ONEWIRE=/sys/bus/w1/devices
 GPIO=/sys/class/gpio
 RELAY=gpio$RELAY_PIN
 HYSTERESIS=1
 RELAY_STATE="?"
-
+echo
 echo "thermo.sh : Simple temperature controller for Raspberry PI"
 echo
 echo "Config: (use environment variables to adjust)"
-echo " THERMO_ADDR:            1wire Sensor Address:  $ADDR"
+echo " THERMO_ADDR:            1WIRE Sensor Address:  $ADDR"
 echo " THERMO_RELAY_PIN:       Relay pin:             $RELAY_PIN"
 echo " THERMO_RELAY_ACTIVE:    Relay Active State:    $RELAY_ACTIVE"
 echo " THERMO_TARGET:          Target Temperature:    $TARGET"
@@ -33,22 +34,22 @@ echo
 
 
 if [ ! -e /sys/bus/w1 ]; then
-  echo "ERROR: 1wire bus NOT detected"
+  echo "ERROR: ONEWIRE bus NOT detected"
   exit -1
 fi
 
-if [ ! -e $1WIRE/$ADDR/w1_slave ]; then
+if [ ! -e $ONEWIRE/$ADDR/w1_slave ]; then
   if [ "$ADDR" == "" ]; then
-    echo "ERROR: No 1wire address provided!"
+    echo "ERROR: No ONEWIRE address provided!"
   else
-    echo "ERROR: 1wire sensor $ADDR NOT detected"
+    echo "ERROR: ONEWIRE sensor $ADDR NOT detected"
   fi
   echo
   echo "Please set it with environment variable, eg:"
   echo "ID=28-011562c951ff RELAY_PIN=2 ./thermo.sh"
   echo
   echo "Detected sensors:"
-  ls $1WIRE |grep '^[1-9][0-9]-'
+  ls $ONEWIRE |grep '^[1-9][0-9]-'
   echo
   echo "Pick one of them and run: THERMO_ADDR=xxx ./thermo.sh"
   exit -1
@@ -89,7 +90,7 @@ setRelay off
 
 while [ 1 ]
 do
-  data=$(cat $1WIRE/$ADDR/w1_slave)
+  data=$(cat $ONEWIRE/$ADDR/w1_slave)
   if echo "$data" | grep -q YES; then
     if [[ $data =~ t=([0-9]+)$ ]]; then
       temp="$((${BASH_REMATCH[1]} / 1000))"
