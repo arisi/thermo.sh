@@ -6,7 +6,7 @@ Simple as it can be: no dependencies, nothing to install on vanilla rasbian OS.
 
 ### Relay
 
-You can any available pin you want for relay control, the script will try
+You can use any available pin you want for relay control: the script will try
 to configure the chosen pin as output.
 
 ### 1Wire 
